@@ -700,7 +700,9 @@ static void fileio(stlink_t *sl)
         strlen1 = read_uint32(sl->q_buf, 0);
         buf = (char*)malloc(strlen1+1);
         assert(buf != NULL);
-        read_buffer(sl, pstr1, buf, strlen1);
+        if (strlen1) {
+            read_buffer(sl, pstr1, buf, strlen1);
+        }
         buf[strlen1] = 0;
  	#ifdef DEBUG
         //printf("gdb_stdio printf pstr1: 0x%0x strlen1: %d  buf: %s\n", pstr1, strlen1, buf);
