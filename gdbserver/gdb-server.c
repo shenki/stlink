@@ -721,7 +721,9 @@ static void fileio(stlink_t *sl)
         strlen1 = read_uint32(sl->q_buf, 0);
         buf = (char*)malloc(strlen1+1);
         assert(buf != NULL);
-        read_buffer(sl, pstr1, buf, strlen1);
+        if (strlen1) {
+            read_buffer(sl, pstr1, buf, strlen1);
+        }
         buf[strlen1] = 0;
  	#ifdef DEBUG
         //printf("gdb_stdio fprintf pstr1: 0x%0x strlen1: %d  buf: %s file: 0x%x\n", pstr1, strlen1, buf, (unsigned int)file);
@@ -776,11 +778,15 @@ static void fileio(stlink_t *sl)
         stlink_read_mem32(sl, file_addr, 4);
         file = (FILE*)read_uint32(sl->q_buf, 0);
 
-        buf = (char*)malloc(size*nmem);
-        assert(buf != NULL);
-        read_buffer(sl, ptr, buf, size*nmem);
-        ret = fwrite(buf, size, nmem, file);
-        free(buf);
+        ret = 0;
+        if (size*nmem) {
+            buf = (char*)malloc(size*nmem);
+            assert(buf != NULL);
+            read_buffer(sl, ptr, buf, size*nmem);
+            ret = fwrite(buf, size, nmem, file);
+            free(buf);
+        }
+
  	#ifdef DEBUG
         printf("gdb_stdio fwrite ptr: 0x%x size: %d nmem: %d file: 0x%x\n", 
                ptr, size, nmem, (unsigned int)file);
@@ -796,12 +802,14 @@ static void fileio(stlink_t *sl)
         nmem = read_uint32(sl->q_buf, 0);
         stlink_read_mem32(sl, file_addr, 4);
         file = (FILE*)read_uint32(sl->q_buf, 0);
-
-        buf = (char*)malloc(size*nmem);
-        assert(buf != NULL);
-        ret = fread(buf, size, nmem, file);
-        write_buffer(sl, ptr, buf, size*nmem);
-        free(buf);
+        
+        if (size*nmem) {
+            buf = (char*)malloc(size*nmem);
+            assert(buf != NULL);
+            ret = fread(buf, size, nmem, file);
+            write_buffer(sl, ptr, buf, size*nmem);
+            free(buf);
+        }
 
  	#ifdef DEBUG
         printf("gdb_stdio fread ptr: 0x%x size: %d nmem: %d file: 0x%x\n", 
